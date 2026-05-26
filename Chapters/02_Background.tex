@@ -1,0 +1,232 @@
+\part{Background}
+
+\chapter{Cybersecurity and Penetration Testing}
+
+\section{Research Environment}
+\label{subsec:ch1-environment}
+% 1. Company context (sector, assets, constraints)
+% 2. Scope assumptions and Rules of Engagement (RoE) summary
+% 3. Testbed / target description (high level)
+% 4. Tools used (recon, scanning, validation, reporting)
+% TODO later
+
+
+\section{Cybersecurity Overview}
+\label{subsec:ch1-overview}
+
+
+
+\subsection{Security Objectives: Confidentiality, Integrity, Availability (CIA)}
+\label{subsubsec:ch1-cia}
+Information security is commonly focused on three core objectives: \textbf{Confidentiality, Integrity, and Availability}.
+The CIA triad provides a practical lens for defining what must be protected in an information system and for testing whether implemented controls match organizational needs. \textbf{NIST} explicitly frames these objectives as foundational to information security
+and uses them as a reference model for protecting information system resources \cite{nistCIA,nistSP80012}.
+
+\textbf{Confidentiality} refers to preserving authorized restrictions on access and disclosure of information, ensuring that
+sensitive data is not exposed to unauthorized individuals, processes, or systems \cite{nistCIA}. In practice, confidentiality is supported through controls such as strong authentication, least privilege and role-based access control, encryption (at rest and in transit), and secure key management.
+
+\textbf{Integrity} means protecting information and processes so they stay accurate, complete, and unaltered. \cite{nistCIA}. Integrity is threatened when malicious actors modify data, tamper with logs, alter configurations, or inject malicious code. Mechanisms that help preserve integrity include cryptographic hashes and digital signatures, controlled change management and secure logging.
+
+\textbf{Availability} ensures timely and reliable access to and use of information by authorized users \cite{nistCIA}. Availability can be impacted by denial-of-service attacks, ransomware, infrastructure failures, and critical misconfigurations. Common supporting mechanisms include redundancy, backup and restore strategies, disaster recovery planning, capacity management, and resilient system design.
+
+These three objectives are interdependent and sometimes require trade-offs (e.g., stronger access control may affect usability).
+Using CIA as a reference model helps justify security decisions, prioritize defenses, and link technical findings to business impact.
+It also provides a clear interpretation layer for penetration testing results: a controlled test may demonstrate impact on
+\textit{confidentiality} (data exposure), \textit{integrity} (unauthorized modification), or \textit{availability} (service disruption)
+within the authorized scope \cite{nistSP80012,iso27001}.
+
+
+
+\subsection{Threat Landscape and Why It Matters}
+\label{subsubsec:ch1-threats}
+
+The 2025--early 2026 threat landscape is defined by three practical pressures: ransomware, rapid exploitation of disclosed vulnerabilities, and the difficulty of prioritizing fixes across a growing attack surface.
+
+\textbf{Ransomware remains a major driver of breaches.}
+Verizon’s 2025 DBIR reports that ransomware is linked to \textbf{75\%} of \emph{system intrusion} breaches \cite{verizonDBIR2025}.
+This matters because business impact is immediate (service disruption, extortion, recovery costs), and attackers often target internet-facing systems to gain initial access.
+
+\textbf{Vulnerability volume keeps rising}
+In 2025, a record \textbf{48,185} CVEs were published according to public analyses of CVE publication data \cite{gamblinCVE2025Review,socketCVE2025} compared to \textbf{40,308} in 2024 and \textbf{29,066} in 2023 \cite{numbCVEsByYear} .
+For 2026, FIRST forecasts a median of approximately \textbf{59,427} published CVEs and states that 2026 is expected to be the first year to exceed \textbf{50,000} published CVEs \cite{firstForecast2026}.
+This matters because no organization can patch everything immediately; teams must focus on what is both \emph{relevant} to their assets and \emph{likely to be exploited}.
+
+A 2026 summary reports the \gls{kev} expanded by about \textbf{20\%} in 2025, adding \textbf{245} vulnerabilities and reaching \textbf{1,484} total entries \cite{securityweekKEV2026}.
+This matters because KEV helps teams focus on issues with confirmed attacker activity.
+
+\textbf{Why this matters for penetration testing.}
+These trends explain the need for proactive validation. The practical question is not only ``does a vulnerability exist?'' but ``can it be exploited \emph{here}, on this exposed asset, under realistic constraints?'' Penetration testing answers that question by validating exploitability and impact with controlled evidence.
+
+
+
+\section{Penetration Testing Fundamentals}
+\label{subsec:ch1-pentest}
+
+\subsection{Definition and Goals of Penetration Testing}
+\label{subsubsec:ch1-pentest-definition}
+
+Penetration testing (``pentesting''), also called \textit{ethical hacking}, is an authorized and controlled security assessment
+where testers simulate attacker-like behavior to uncover and confirm exploitable weaknesses before malicious actors can take advantage of them
+\cite{nistPenTest,nistSP800115,doiPenTest}. Unlike purely enumerative approaches, penetration testing emphasizes
+\textbf{exploit validation}, \textbf{evidence collection}, and \textbf{impact measurement} within agreed Rules of Engagement (RoE)
+\cite{nistSP800115}.
+
+The goals of penetration testing can be summarized as follows:
+\begin{itemize}
+  \item \textbf{Validate exploitability.} Confirm, under realistic constraints, whether a weakness can be exploited on the target
+  system (reducing false positives) \cite{nistSP800115}.
+  \item \textbf{Measure impact.} Demonstrate what an attacker can achieve (e.g., sensitive data access, privilege escalation,
+  lateral movement, or service disruption) and relate it to CIA impact \cite{nistSP800115}.
+  \item \textbf{Assess control effectiveness.} Evaluate whether the current applied security controls detect or prevent attacker-like actions during the test window \cite{nistSP800115}.
+  \item \textbf{Provide actionable remediation.} Deliver reproducible evidence and mitigation guidance that supports prioritization and
+  reduces overall risk \cite{nistSP800115,doiPenTest}.
+\end{itemize}
+
+Classical pentesting workflows typically follow phased activities: reconnaissance/enumeration, vulnerability analysis, exploitation,
+and (only if explicitly authorized) limited post-exploitation to validate depth of compromise, followed by reporting
+\cite{nistSP800115}. Recent research explores how LLM-based multi-agent systems can partially emulate this workflow by decomposing
+tasks such as recon, tool execution, exploitation planning, and summarization into specialized agents that collaborate on a shared
+objective \cite{vulnbot,aiPentestBenchmark,checkmate}.
+
+\subsection{Penetration Testing vs. Vulnerability Assessment}
+\label{subsubsec:ch1-pentest-vs-va}
+
+Penetration testing and vulnerability assessment (VA) are complementary but distinct.
+
+\textbf{Vulnerability assessment} focuses on \textbf{breadth and coverage}: discovering and enumerating known vulnerabilities and
+misconfigurations across assets, often using automated scanners and configuration checks. Its outputs are typically lists of findings
+with severities and remediation advice. However, these results may include false positives, may miss context-specific exploitability,
+and generally do not demonstrate attacker objectives end-to-end \cite{nistSP800115}.
+
+\textbf{Penetration testing} focuses on \textbf{validation and realism}: selecting effective attack paths, attempting exploitation,
+and producing evidence of impact under the engagement constraints. Pentesting is particularly valuable for:
+\begin{itemize}
+  \item confirming whether high-severity findings are actually exploitable in the target context,
+  \item identifying chained weaknesses
+  \item uncovering gaps that scanners may miss
+  \item generating evidence that supports remediation prioritization \cite{nistSP800115,doiPenTest}.
+\end{itemize}
+
+\section{Why Penetration Testing?}
+\label{subsec:ch1-why}
+
+\subsection{Risk Reduction and Prioritization}
+\label{subsubsec:ch1-risk}
+Penetration testing helps an organization find and validate exploitable vulnerabilities before they are abused by real attackers.
+By demonstrating realistic attack paths and their business impact organizations can secure their infrastructure, and make informed decisions about what bug to fix and when. \cite{WhatPentestCF}
+
+\subsection{Compliance and Assurance}
+\label{subsubsec:ch1-compliance}
+Pentesting is also used to provide assurance for auditors, customers, regulators, and internal governance that security controls are implemented and effective in practice.
+In regulated environments, pentesting supports:
+\begin{itemize}
+    \item \textbf{Compliance evidence:} demonstrating adherence to organizational security policies and external requirements through repeatable, documented testing activities \cite{nistSP800115}.
+    \item \textbf{Standard-driven requirements:} for example, PCI guidance emphasizes penetration testing to validate security controls and segmentation effectiveness in cardholder data environments \cite{pciPenTestGuida}.
+    \item \textbf{Assurance over checklists:} going beyond configuration reviews by testing whether defenses withstand malicious techniques \cite{cisaPenTest}.
+\end{itemize}
+
+
+
+\section{Pentest Types and Scope Definition}
+\label{subsec:ch1-types-scope}
+
+\subsection{Rules of Engagement (RoE) and Scoping}
+\label{subsubsec:ch1-roe}
+RoE stands for Rules Of Engagement, These are the written conditions and constraints that govern how the penetration testing is conducted.
+They define what is \textit{authorized} and \textit{forbidden} during testing, in order to keep activities safe, legally compliant
+, and aligned with business constraints \cite{nistSP800115}.
+\begin{itemize}
+  \item \textbf{Scope definition:} in-scope and out-of-scope targets (IP ranges, domains, applications, cloud accounts) \cite{nistSP800115}.
+  \item \textbf{Authorized techniques and constraints:} allowed tools/actions (e.g., scanning intensity, password testing, exploitation),
+  prohibited actions and limitations on post-exploitation \cite{nistSP800115}.
+  \item \textbf{Timing and communications:} test window, maintenance periods, points of contact, and escalation channels for incidents
+  (e.g., if production instability is observed) \cite{nistSP800115}.
+  \item \textbf{Data handling and evidence:} what data may be accessed, how evidence is stored, retention duration, and confidentiality
+  requirements \cite{nistSP800115}.
+  \item \textbf{Success criteria and deliverables:} expected outputs (report format, severity model, remediation guidance) and acceptance
+  criteria for closing findings \cite{nistSP800115}.
+\end{itemize}
+
+By establishing RoE, penetration testing remains a controlled security activity rather than uncontrolled experimentation.
+This is also critical for automated and agent-based pentesting: the system must enforce RoE constraints at execution time to ensure
+traceability, prevent out-of-scope actions, and maintain operational safety \cite{nistSP800115,checkmate}.
+
+\subsection{Black-box, Grey-box, and White-box Testing}
+\label{subsubsec:ch1-box}
+Penetration testing is commonly classified by the level of prior knowledge and access granted to the testers at the beginning of an engagement. NIST distinguishes \textbf{black-box}, \textbf{grey-box}, and \textbf{white-box} testing, with the choice depending on objectives, scope constraints, and available resources \cite{nistSP80053,nistSP800115}.
+
+\textbf{Black-box testing} assumes little to no initial information, approximating an external attacker’s perspective. Testers must rely on reconnaissance and enumeration to identify exposed assets and viable attack paths \cite{owaspWSTGv41,nistSP800115}. This setup is well suited for assessing real-world exposure and detection/response posture; however, limited context and time can reduce coverage of internal flaws and configuration weaknesses.
+
+\textbf{White-box testing} provides extensive internal knowledge and/or access (e.g., architecture documentation, source code, credentials, and asset inventories). This maximizes coverage and efficiency and enables deeper validation of security controls and assumptions \cite{nistSP80053,crestPenTestGuide}. While strong for assurance and root-cause analysis, it is less representative of a purely external starting point.
+
+\textbf{Grey-box testing} lies between these extremes: testers receive partial information or limited credentials. By accelerating discovery while still requiring attacker-like reasoning and path finding, it often provides a practical balance between realism and depth \cite{nistSP80053,crestPenTestGuide}.
+
+In automated and agent-based penetration testing, the selected ``box'' level directly determines which contextual inputs the system is permitted to consume (e.g., credentials, network topology, source code) and what boundaries it must enforce during planning and execution \cite{checkmate}. % :contentReference[oaicite:0]{index=0}
+
+\subsection{Internal vs. External Testing}
+\label{subsubsec:ch1-internal-external}
+
+NIST-style guidance commonly distinguishes \textbf{external} and \textbf{internal} penetration testing based on the tester’s starting position relative to the organization’s network. External testing evaluates the security posture \emph{as it appears from outside} the perimeter (typically the Internet) and aims to identify weaknesses that could be exploited by an external attacker \cite{nistSP800115,gsaPentestGuide2024}. In contrast, internal testing is performed \emph{from within} the perimeter, assuming the identity of a trusted insider or a malicious actor who has already bypassed perimeter defenses, in order to expose exploitable weaknesses and demonstrate potential organizational impact \cite{nistSP800115,gsaPentestGuide2024}.
+
+\textbf{External testing (perimeter view).}
+The scope usually focuses on Internet-facing assets such as public IP ranges, VPN portals, web applications, exposed administrative interfaces, mail/DNS services, and cloud entry points. The workflow often emphasizes attack-surface discovery (asset identification, service enumeration), validation of remotely reachable vulnerabilities, and control weaknesses that enable initial access. The main value is to answer: \emph{“What can an attacker do with only public reachability?”} \cite{gsaPentestGuide2024,hackeroneExternalNetworkPentest}. External tests are also useful to verify whether segmentation and boundary controls effectively reduce the exploitable surface exposed to the Internet.
+
+\textbf{Internal testing (assumed-breach view).}
+Internal testing starts with some level of internal access (e.g., a test workstation/VPN account) and evaluates how far an attacker could go once inside. Guidance highlights that internal testing can reveal risks that are not visible externally, including weak system hardening, insecure service/application configurations, insufficient authentication and access control, and opportunities for privilege escalation and lateral movement \cite{gsaPentestGuide2024}. The main value is to answer: \emph{“If the perimeter is bypassed, how quickly can critical assets be reached?”} This directly supports assessment of detection/response readiness and the effectiveness of internal controls being implemented.
+
+\textbf{Practical selection and combination.}
+In practice, organizations often run both views because they measure different failure modes: external tests validate \emph{initial access paths}, while internal tests validate \emph{post-compromise containment}. The Rules of Engagement (RoE) should explicitly define which view(s) apply, the allowed starting conditions, and which impacts are permitted. \cite{gsaPentestGuide2024,nistSP800115}.
+
+
+\section{Penetration Testing Methodology}
+\label{subsec:ch1-methodology}
+
+Penetration testing methodology is a clear plan that guides the tester from start to finish. This plan helps ensure that tests are done consistently, thoroughly, and in a way that others can understand or repeat. Recognized frameworks such as NIST SP 800-115 \cite{nistSP800115}, the Penetration Testing Execution Standard (PTES) \cite{ptes}, and the OWASP Web Security Testing Guide (WSTG) \cite{owaspWSTG} all lay out practical steps that experienced testers use in real engagements.
+
+Even though these frameworks use slightly different terms or emphasize different parts of the process, they tend to follow a similar flow. We can think of a typical engagement as moving through five broad stages:
+
+\begin{itemize}
+  \item \textbf{Getting ready:} agreeing on what will be tested, how it will be tested, and what the tester is allowed to do.
+  \item \textbf{Gathering information:} learning as much as possible about the target to find possible entry points.
+  \item \textbf{Looking for and testing weaknesses:} examining systems to find and verify vulnerabilities that can actually be exploited.
+  \item \textbf{Exploring further, if allowed:} once a weakness has been confirmed, seeing how far it can be used to gain deeper access or show impact.
+  \item \textbf{Wrapping up and reporting:} putting everything together in a clear report with evidence and guidance on how to fix the identified issues.
+\end{itemize}
+
+Thinking in these general stages makes it easier to compare different approaches and to explain what a test did and why. It also sets a solid foundation for automation: each stage can be broken down into smaller tasks that a system or team can follow.
+
+\subsection{Getting ready and scoping}
+\label{subsubsec:ch1-method-prep}
+
+Before any technical work begins, testers and the organization agree on boundaries. This includes the systems in scope, what actions are allowed, and how success will be judged. Clear scoping prevents misunderstandings and keeps testing safe and focused \cite{nistSP800115,ptes}.
+
+\subsection{Gathering information}
+\label{subsubsec:ch1-method-recon}
+
+In this stage, the tester builds a picture of what exists and how it’s connected. Depending on how much the tester already knows, this can range from simple background research to active scanning of networks and services. The result is a map of potential targets to explore next \cite{ptes,owaspWSTG}.
+
+\subsection{Vulnerability analysis and testing}
+\label{subsubsec:ch1-method-exploit}
+
+Once the surface is understood, the tester looks for weaknesses and checks whether they can actually be exploited in this specific environment. The goal here is not just to list problems but to verify which ones matter in practice \cite{nistSP800115,ptes}.
+
+\subsection{Exploring further when allowed}
+\label{subsubsec:ch1-method-post}
+
+If the rules of engagement allow it, testers may try to go deeper after finding an initial weakness. This could include checking privilege levels or moving laterally within the environment, always with care to stay within agreed boundaries \cite{ptes}.
+
+\subsection{Putting it all together: reporting}
+\label{subsubsec:ch1-method-report}
+
+At the end, all findings are collected into a structured report. This report typically has a summary for decision-makers, detailed evidence for technical teams, and practical advice on how to fix the confirmed problems \cite{nistSP800115,ptes}.
+
+\section{Conclusion}
+\label{subsec:ch1-conclusion}
+
+In this chapter, we laid the ground for the rest of this thesis by explaining what penetration testing is and why we does it. We started by looking at core security goals like the CIA triad, and we tied those goals back to how tests are designed.
+
+We then walked through what penetration testing does not just finding possible issues, but validate which ones can really be exploited and show how it would really impact the organization. We also explained the importance of clear rules and scope, and how test type can vary depending on how much information the tester starts with.
+
+Finally, we introduced widely accepted ways of structuring a penetration test. And presented a set of stages that most professional testers use. This provides a practical foundation for the work that follows.
+
+With this foundation in place, you now have the context to understand why a more automated, flexible approach to pentesting could improve the way it is carried out in complex environments.
